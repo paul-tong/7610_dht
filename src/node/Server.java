@@ -1,12 +1,15 @@
 package node;
 
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
 import constant.Constants;
 import message.*;
+import utils.Helper;
 
 import static constant.Constants.*;
 
@@ -180,12 +183,18 @@ public class Server {
     public static void main(String[] args) {
         // todo: read names from args, compute id with hash function
         String nodeName = "node3";
-        int nodeId = 9988;
 
         String headName = "node1";
-        int headId = 9986;
+        try {
+            InetAddress inetAddress = InetAddress.getLocalHost();
+            int nodeId = Helper.getHash(inetAddress.toString() + ":" + Constants.PORT);
+            InetAddress headIP = InetAddress.getByName(headName);
+            int headId = Helper.getHash(headIP.toString() + ":" + Constants.PORT);
+            final Server server = new Server(nodeName, nodeId, headName, headId);
+            server.start();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
 
-        final Server server = new Server(nodeName, nodeId, headName, headId);
-        server.start();
     }
 }
