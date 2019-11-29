@@ -5,11 +5,11 @@ import node.Node;
 
 import java.io.Serializable;
 
-public class SetPrevNodeMessage implements Message, Serializable {
+public class SetPrevMessage implements Message, Serializable {
     private int type = Constants.SET_PREV_MESSAGE_TYPE;
     private Node prev;
 
-    public SetPrevNodeMessage(Node node) {
+    public SetPrevMessage(Node node) {
         prev = node;
     }
 

@@ -4,11 +4,9 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import message.FindNextMessage;
-import message.Message;
-import message.MessageOperator;
+import message.*;
+
 import static constant.Constants.*;
 
 public class Server {
@@ -103,7 +101,23 @@ public class Server {
                 System.out.println("receive message: FIND_NEXT_MESSAGE_TYPE");
                 handleFindNextMessage((FindNextMessage)message);
             }
+            if (type == SET_NEXT_MESSAGE_TYPE) {
+                System.out.println("receive message: SET_NEXT_MESSAGE_TYPE");
+                handleSetNextMessage((SetNextMessage)message);
+            }
+            if (type == SET_PREV_MESSAGE_TYPE) {
+                System.out.println("receive message: SET_PREV_MESSAGE_TYPE");
+                handleSetPrevMessage((SetPrevMessage)message);
+            }
         }
+    }
+
+    private void handleSetNextMessage(SetNextMessage message) {
+
+    }
+
+    private void handleSetPrevMessage(SetPrevMessage message) {
+
     }
 
     private void handleFindNextMessage(FindNextMessage message) {
