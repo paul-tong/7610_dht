@@ -15,7 +15,7 @@ public class SetNextMessage implements Message, Serializable {
 
     @Override
     public int getType() {
-        return 0;
+        return type;
     }
 
     public Node getNext() {

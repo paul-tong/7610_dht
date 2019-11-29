@@ -45,7 +45,7 @@ public class MessageOperator {
     // todo: currently nodeName is always localhost, sendPort is id of target node
     //  when use docker, don't need sendPort, all nodes use the same PORT -> sendMessage(socket, nodeName, message)
     public static void sendMessage(DatagramSocket socket, String nodeName, Message message, int sendPort) {
-        System.out.println("send message to: " + nodeName);
+        System.out.println("send message type " + message.getType() + " to: " + nodeName);
 
         byte buf[] = null;
         buf = serializeMessage(message);
@@ -82,6 +82,8 @@ public class MessageOperator {
 
         // Clear the buffer after every message.
         // receive = new byte[BUFFER_SIZE];
+
+        System.out.println("receive message type " + message.getType());
         return message;
     }
 }
