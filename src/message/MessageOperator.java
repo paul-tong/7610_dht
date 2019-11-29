@@ -12,12 +12,10 @@ public class MessageOperator {
 
     public static byte[] serializeMessage(Message message) {
         ByteArrayOutputStream bStream = new ByteArrayOutputStream();
-        ObjectOutput oo = null;
-
         try {
+            ObjectOutput oo = new ObjectOutputStream(bStream);
             oo.writeObject(message);
             oo.close();
-            oo = new ObjectOutputStream(bStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,13 +43,17 @@ public class MessageOperator {
     }
 
     // todo: currently nodeName is always localhost, sendPort is id of target node
-    //  when use docker, don't need sendPort, all nodes use the same PORT
+    //  when use docker, don't need sendPort, all nodes use the same PORT -> sendMessage(socket, nodeName, message)
     public static void sendMessage(DatagramSocket socket, String nodeName, Message message, int sendPort) {
+        System.out.println("send message to: " + nodeName);
+
         byte buf[] = null;
         buf = serializeMessage(message);
 
         try {
-            InetAddress ip = InetAddress.getByName(nodeName);
+            // todo: use nodeName instead of localhost, don't need sendPort
+            //InetAddress ip = InetAddress.getByName(nodeName);
+            InetAddress ip = InetAddress.getByName("localhost");
             DatagramPacket DpSend = new DatagramPacket(buf, buf.length, ip, sendPort);
             socket.send(DpSend);
         } catch (UnknownHostException e) {
@@ -63,14 +65,14 @@ public class MessageOperator {
 
     public static Message receiveMessage(DatagramSocket socket) {
         byte[] receive = new byte[BUFFER_SIZE];
-        DatagramPacket DpReceive = null;
+        DatagramPacket dpReceive = null;
 
         // create a DatgramPacket to receive the data.
-        DpReceive = new DatagramPacket(receive, receive.length);
+        dpReceive = new DatagramPacket(receive, receive.length);
 
         // revieve the data in byte buffer.
         try {
-            socket.receive(DpReceive);
+            socket.receive(dpReceive);
         } catch (IOException e) {
             e.printStackTrace();
         }
