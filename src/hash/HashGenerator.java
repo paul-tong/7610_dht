@@ -7,7 +7,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class HashGenerator {
-    public static final int TOTAL_ID_SPACE = 1024;
+
     /**
      * A custom byte to hex converter to get the hashed value in hexadecimal
      * @param hash bytes array
@@ -41,7 +41,7 @@ public class HashGenerator {
         int hashVal = 0;
 
         for (int l = 0; l < encodedHash.length; l++)
-            hashVal = (31 * hashVal + encodedHash[l]) % TOTAL_ID_SPACE;
+            hashVal = (31 * hashVal + encodedHash[l]) % constant.Constants.TOTAL_ID_SPACE;
 
 
         // todo: Consistent hash?

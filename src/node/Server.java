@@ -68,6 +68,7 @@ public class Server {
         }
     }
 
+
     // join a node to the ring
     private void join() {
         System.out.println("try to join the ring");
@@ -185,6 +186,12 @@ public class Server {
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
         String nodeName = "node2";
+        for (int i = 0; i < args.length; i++) {
+            if ("-h".equals(args[i])) {
+                nodeName = args[++i];
+            }
+        }
+
         int nodeId = 9982;
 
         String headName = "node1";

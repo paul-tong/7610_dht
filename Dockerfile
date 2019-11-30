@@ -9,6 +9,6 @@ COPY ./src/ /src
 COPY hosts /src
 
 WORKDIR /src
-RUN javac *.java
+RUN javac **/*.java
 
-ENTRYPOINT ["java","Server"]
+ENTRYPOINT ["java","node/Server"]
