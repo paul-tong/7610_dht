@@ -1,10 +1,12 @@
-package utils;
+package hash;
+
+import constant.Constants;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Helper {
+public class HashGenerator {
     public static final int TOTAL_ID_SPACE = 1024;
     /**
      * A custom byte to hex converter to get the hashed value in hexadecimal
@@ -41,6 +43,12 @@ public class Helper {
         for (int l = 0; l < encodedHash.length; l++)
             hashVal = (31 * hashVal + encodedHash[l]) % TOTAL_ID_SPACE;
 
-        return hashVal;
+
+        // todo: Consistent hash?
+        // id mod (2^m), need to convert to positive
+        hashVal = hashVal % Constants.MODULE;
+        return (hashVal < 0) ? (hashVal + Constants.MODULE) : hashVal;
     }
 }
+
+
