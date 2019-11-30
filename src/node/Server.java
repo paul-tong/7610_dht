@@ -1,11 +1,14 @@
 package node;
 
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
 import constant.Constants;
+import hash.HashGenerator;
 import message.*;
 
 import static constant.Constants.*;
@@ -178,14 +181,32 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        // todo: read names from args, compute id with hash function
-        String nodeName = "node3";
-        int nodeId = 9988;
+        // todo: read names from args, get ip address from name, compute id by hashing ip
+        //  for testing, all nodes use localhost with different ports
+        //  so we can run multiple instances on intellij
+        String nodeName = "node2";
+        int nodeId = 9982;
 
         String headName = "node1";
-        int headId = 9986;
+        int headId = 9981;
 
         final Server server = new Server(nodeName, nodeId, headName, headId);
         server.start();
+
+        // todo: uncommand this when using docker
+        /*
+        try {
+            String nodeIp = InetAddress.getByName(nodeName).toString() + ":" + PORT;
+            String headIp = InetAddress.getByName(headName).toString() + ":" + PORT;
+            int nodeId = HashGenerator.getHash(nodeIp);
+            int headId = HashGenerator.getHash(headIp);
+
+            final Server server = new Server(nodeName, nodeId, headName, headId);
+            server.start();
+
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }*/
+
     }
 }
