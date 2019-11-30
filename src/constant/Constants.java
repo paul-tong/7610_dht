@@ -8,5 +8,5 @@ public class Constants {
     public static final int BUFFER_SIZE = 65535;
     public static final int MODULE = (int)Math.pow(2, 6); // 2^m, used to mod hashed id
     public static final int INITIAL_WAIT_TIME = 15;
-    public static final long STABLIZATION_INTERVAL = 1000L;
+    public static final long STABLIZATION_INTERVAL = 500L;
 }

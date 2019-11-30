@@ -1,17 +1,20 @@
 package node;
 
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import constant.Constants;
 import hash.HashGenerator;
 import message.*;
-
 import static constant.Constants.*;
+
 
 public class Server {
     private Node current;
@@ -23,14 +26,13 @@ public class Server {
 
     // todo: compute id base on name with hash function
     public Server(String name, int id, String headName, int headId) {
-        current = new Node(name);
-        current.setId(id);
+        current = new Node(name, id);
 
-        head = new Node(headName);
-        head.setId(headId);
+        head = new Node(headName, headId);
 
-        next = null;
-        prev = null;
+        // connect to itself initially
+        next = current;
+        prev = current;
 
 
         dataMap = new HashMap<>();
@@ -48,7 +50,7 @@ public class Server {
         System.out.println("server " + current.getName() + " started...");
 
         // start timers (timers will be in separate threads)
-        //startStablizationTimer();
+        startStabilizationTimer();
 
         // run separate threads for receiving message
         final Thread receiveThread = new Thread() {
@@ -68,15 +70,15 @@ public class Server {
         }
     }
 
-    // join a node to the ring
+    /**
+     * join a node to the ring
+     */
     private void join() {
         System.out.println("try to join the ring");
 
         // current node is head (first node), set it connects to itself
         if (current.getName().equals(head.getName())) {
-            System.out.println("current node is head, connect to itself");
-            next = current;
-            prev = current;
+            System.out.println("current node is head, remain connect to itself");
             return;
         }
 
@@ -85,6 +87,23 @@ public class Server {
         MessageOperator.sendMessage(socket, head.getName(), message, head.getId());
     }
 
+
+    private void startStabilizationTimer() {
+        TimerTask repeatedTask = new TimerTask() {
+            public void run() {
+                sendStabilizationMessage();
+            }
+        };
+
+        // timer to repeat at certain interval
+        Timer stabilizationTimer = new Timer("stabilizationTimer");
+        stabilizationTimer.scheduleAtFixedRate(repeatedTask, 0L, STABLIZATION_INTERVAL);
+
+    }
+
+    private void sendStabilizationMessage() {
+        //System.out.println("stable..");
+    }
 
     private void receiveMessage() {
         while (true) {
