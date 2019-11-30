@@ -1,17 +1,12 @@
 package node;
 
-import java.io.IOException;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import constant.Constants;
-import hash.HashGenerator;
 import message.*;
 import static constant.Constants.*;
 
@@ -97,12 +92,14 @@ public class Server {
 
         // timer to repeat at certain interval
         Timer stabilizationTimer = new Timer("stabilizationTimer");
-        stabilizationTimer.scheduleAtFixedRate(repeatedTask, 0L, STABLIZATION_INTERVAL);
+        stabilizationTimer.scheduleAtFixedRate(repeatedTask, STABLIZATION_DELAY, STABLIZATION_INTERVAL);
 
     }
 
     private void sendStabilizationMessage() {
-        //System.out.println("stable..");
+        // send message to request its successor's predecessor
+        Message message = new RequestPrevMessage(new Node(current.getName(), current.getId()));
+        MessageOperator.sendMessage(socket, next.getName(), message, next.getId());
     }
 
     private void receiveMessage() {
@@ -119,6 +116,86 @@ public class Server {
             if (type == SET_PREV_MESSAGE_TYPE) {
                 handleSetPrevMessage((SetPrevMessage)message);
             }
+            if (type == REQUEST_PREV_MESSAGE_TYPE) {
+                handleRequestPrevMessage((RequestPrevMessage)message);
+            }
+            if (type == RETURN_PREV_MESSAGE_TYPE) {
+                handleReturnPrevMessage((ReturnPrevMessage)message);
+            }
+            if (type == NOTIFY_NEXT_MESSAGE_TYPE) {
+                handleNotifyNextMessage((NotifyNextMessage)message);
+            }
+        }
+    }
+
+
+    /**
+     * return current node's prev node to request node
+     * @param message
+     */
+    private void handleRequestPrevMessage(RequestPrevMessage message) {
+        // send message to return current node's prev node to request node
+        Node requestNode = message.getRequestNode();
+        Message messageReturn = new ReturnPrevMessage(new Node(prev.getName(), prev.getId()));
+        MessageOperator.sendMessage(socket, requestNode.getName(), messageReturn, requestNode.getId());
+    }
+
+
+    /**
+     * receive the prev node of its next node, check if need to update
+     * current node's next node
+     * @param message
+     */
+    private void handleReturnPrevMessage(ReturnPrevMessage message) {
+        Node pn = message.getPreNode(); // potential next node
+
+        int currentId = current.getId();
+        int nextId = next.getId();
+        int pnId = pn.getId();
+
+        // is it self, do nothing
+        if (pnId == currentId) {
+            //System.out.println("next.prev is itself, connection is stable");
+            return;
+        }
+
+        /**
+         * pnId > currentId && pnId < nextId means insert a node in between two nodes
+         * currentId == nextId, means current node connects to itself, we need to
+         *  break the self circle
+         * currentId > nextId, means current node is the end of the ring, we may
+         *  insert a biggest or smallest node at the end of ring
+         */
+        if ((pnId > currentId && pnId < nextId) || (currentId >= nextId)) {
+            next = new Node(pn.getName(), pnId); // set new next node
+            System.out.println("set new next node: " + next.getName() + "-" + next.getId());
+        }
+
+        // notify current node's next node the existence of current node
+        Message messageNotify = new NotifyNextMessage(new Node(current.getName(), current.getId()));
+        MessageOperator.sendMessage(socket, next.getName(), messageNotify, next.getId());
+    }
+
+
+    /**
+     * receive notification of a potential previous node
+     * @param message
+     */
+    private void handleNotifyNextMessage(NotifyNextMessage message) {
+        Node pn = message.getCurNode(); // potential previous node
+
+        int currentId = current.getId();
+        int prevId = prev.getId();
+        int pnId = pn.getId();
+
+        /**
+         * pnId > prevId && pnId < currentId means insert a node between two nodes
+         * currentId == prevId means current node connects to itself
+         * todo: needs consider currentId < prevId?
+         */
+        if ((pnId > prevId && pnId < currentId) || (currentId == prevId)) {
+            prev = new Node(pn.getName(), pnId);
+            System.out.println("set new prev node: " + prev.getName() + "-" + prev.getId());
         }
     }
 
@@ -143,14 +220,14 @@ public class Server {
 
         // arrive header again(iterate all nodes in the ring)
         if (current.getId() == head.getId() && !message.getIsFirst()) {
-            System.out.println("back to the head node");
+            //System.out.println("back to the head node");
 
             /**
              * has node with bigger id than request node
              * connect request node to the minimal node that has bigger id
              */
             if (message.getMinBiggerNode() != null) {
-                System.out.println("connect request node to minBigger node");
+                //System.out.println("connect request node to minBigger node");
 
                 // send message to request node to set minBigger node as next node
                 Message setNextMessage = new SetNextMessage(new Node(minBiggerNode.getName(), minBiggerNode.getId()));
@@ -162,7 +239,7 @@ public class Server {
                 MessageOperator.sendMessage(socket, minBiggerNode.getName(), setPrevMessage, minBiggerNode.getId());
             }
             else { // has no bigger node, connect request node to the minimal node
-                System.out.println("connect request node to min node");
+                //System.out.println("connect request node to min node");
 
                 // send message to request node to set min node as next node
                 Message setNextMessage = new SetNextMessage(new Node(minNode.getName(), minNode.getId()));
@@ -177,7 +254,7 @@ public class Server {
         }
 
         // haven't iterate the whole ring, update message information
-        System.out.println("haven't iterate the whole ring, go to next node");
+        //System.out.println("haven't iterate the whole ring, go to next node");
 
         int currentId = current.getId();
         String currentName = current.getName();
@@ -226,6 +303,5 @@ public class Server {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }*/
-
     }
 }
