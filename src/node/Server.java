@@ -10,7 +10,6 @@ import java.util.TimerTask;
 import message.*;
 import static constant.Constants.*;
 
-
 public class Server {
     private Node current;
     private Node next;
@@ -125,9 +124,53 @@ public class Server {
             if (type == NOTIFY_NEXT_MESSAGE_TYPE) {
                 handleNotifyNextMessage((NotifyNextMessage)message);
             }
+            if (type == REQUEST_NODE_LEAVE_MESSAGE_TYPE) {
+                handleRequestNodeLeaveMessage((RequestNodeLeaveMessage)message);
+            }
         }
     }
 
+    private void handleRequestNodeLeaveMessage(RequestNodeLeaveMessage message) {
+        // node is head, cannot leave
+        if (current.getId() == head.getId()) {
+            String note = buildResponseNote(current.getName(), current.getId(),"is head, cannot leave");
+            respondClientMessage(message.getClient(), note);
+            System.out.println(note);
+            return;
+        }
+
+        // send message, set cur.pre.next = cur.next
+        Message setNextMessage = new SetNextMessage(new Node(next.getName(), next.getId()));
+        MessageOperator.sendMessage(socket, prev.getName(), setNextMessage, prev.getId());
+
+        // send message, set cur.next.pre = cur.pre
+        Message setPrevMessage = new SetPrevMessage(new Node(prev.getName(), prev.getId()));
+        MessageOperator.sendMessage(socket, next.getName(), setPrevMessage, next.getId());
+
+        // todo: transfer all current node's data to cur.next
+
+        // send response to client
+        String note = buildResponseNote(current.getName(), current.getId(),"just left");
+        respondClientMessage(message.getClient(), note);
+        System.out.println(note);
+
+        // kill the node
+        System.exit(0);
+    }
+
+    private String buildResponseNote(String name, int id, String info) {
+        return name + "-" + id + ": " + info;
+    }
+
+    /**
+     * send message back to client
+     * @param client
+     * @param note
+     */
+    private void respondClientMessage(Node client, String note) {
+        Message response = new RespondClientMessage(note);
+        MessageOperator.sendMessage(socket, client.getName(), response, client.getId());
+    }
 
     /**
      * return current node's prev node to request node
@@ -280,8 +323,8 @@ public class Server {
         // todo: read names from args, get ip address from name, compute id by hashing ip
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
-        String nodeName = "node2";
-        int nodeId = 9982;
+        String nodeName = "node1";
+        int nodeId = 9981;
 
         String headName = "node1";
         int headId = 9981;
