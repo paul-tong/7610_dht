@@ -31,6 +31,19 @@ public class Server {
 
         dataMap = new HashMap<>();
 
+        // todo: for testing, add some data into map if it is head node
+        if (name.equals("node2")) {
+            dataMap.put(9879, 1);
+            dataMap.put(9880, 1);
+            dataMap.put(9881, 1);
+            dataMap.put(9882, 1);
+            dataMap.put(9883, 1);
+            dataMap.put(9884, 1);
+            dataMap.put(9885, 1);
+            dataMap.put(9886, 1);
+            dataMap.put(9887, 1);
+        }
+
         try {
             // todo: for test use id as port number
             //  when use docker, use Constant.PORT
@@ -142,6 +155,12 @@ public class Server {
      */
     private void handleRespondTransferMessage(RespondTransferMessage message) {
         // put data into map
+        Map<Integer, Integer> data = message.getTransferData();
+        System.out.println("receiving transfer data from " + message.getOriginalNodeName());
+        for (Map.Entry<Integer, Integer> e : data.entrySet()) {
+            System.out.println("<" + e.getKey() + ", " + e.getValue() + ">");
+            dataMap.put(e.getKey(), e.getValue());
+        }
     }
 
     /**
@@ -152,6 +171,38 @@ public class Server {
     private void handleRequestTransferMessage(RequestTransferMessage message) {
         // transfer data based on transfer type
         // put data into map, wrap and send in respondTransferMessage
+        Node requestNode = message.getRequestNode();
+        HashMap<Integer, Integer> transferMap = new HashMap<>();
+
+        for (Map.Entry<Integer, Integer> e : dataMap.entrySet()) {
+            int keyId = e.getKey();
+            int val = e.getValue();
+
+            if (message.getTransferType() == JOIN_MIN_TRANSFER_TYPE) { // new node is min node(current node is previous min node)
+                if (keyId > current.getId() || keyId <= requestNode.getId()) {
+                    transferMap.put(keyId, val);
+                }
+            }
+            else if (message.getTransferType() == JOIN_MAX_TRANSFER_TYPE){ // new node is max node(means current node is min node)
+                if (keyId > current.getId() && keyId <= requestNode.getId()) {
+                    transferMap.put(keyId, val);
+                }
+            }
+            else { // new node is not min or max node, current node is not previous min node
+                if (keyId <= requestNode.getId()) {
+                    transferMap.put(keyId, val);
+                }
+            }
+        }
+
+        // send message to request node to transfer data
+        System.out.println("transferring data to " + requestNode.getName());
+        Message transferMessage = new RespondTransferMessage(transferMap, current.getName());
+        MessageOperator.sendMessage(socket, requestNode.getName(), transferMessage, requestNode.getId());
+        for (Map.Entry<Integer, Integer> e : transferMap.entrySet()) {
+            dataMap.remove(e.getKey()); // remove data from this node
+            System.out.println("<" + e.getKey() + ", " + e.getValue() + ">");
+        }
     }
 
     private void handleRequestNodeLeaveMessage(RequestNodeLeaveMessage message) {
@@ -172,8 +223,12 @@ public class Server {
         MessageOperator.sendMessage(socket, next.getName(), setPrevMessage, next.getId());
 
         // todo: transfer all current node's data to cur.next
-        Message transferMessage = new RespondTransferMessage(dataMap);
+        Message transferMessage = new RespondTransferMessage(dataMap, current.getName());
         MessageOperator.sendMessage(socket, next.getName(), transferMessage, next.getId());
+        System.out.println("transferring data to " + next.getName());
+        for (Map.Entry<Integer, Integer> e : dataMap.entrySet()) {
+            System.out.println("<" + e.getKey() + ", " + e.getValue() + ">");
+        }
 
         // send response to client
         String note = buildResponseNote(current.getName(), current.getId(),"just left");
@@ -309,11 +364,11 @@ public class Server {
 
                 // send message to transfer data from its next node
                 if (requestNode.getId() < minNode.getId()) { // new node is a new minimal node
-                    Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_MIN_TRANFER_TYPE);
+                    Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_MIN_TRANSFER_TYPE);
                     MessageOperator.sendMessage(socket, minBiggerNode.getName(), requestTransferMessage, minBiggerNode.getId());
                 }
                 else { // new node is not a minimal node(insert it between two nodes)
-                    Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_NOT_MIN_TRANFER_TYPE);
+                    Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_NOT_MIN_MAX_TRANSFER_TYPE);
                     MessageOperator.sendMessage(socket, minBiggerNode.getName(), requestTransferMessage, minBiggerNode.getId());
                 }
             }
@@ -330,7 +385,7 @@ public class Server {
 
                 // send message to transfer data from its next node
                 // new node is a biggest node, not a minimal node
-                Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_NOT_MIN_TRANFER_TYPE);
+                Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_MAX_TRANSFER_TYPE);
                 MessageOperator.sendMessage(socket, minNode.getName(), requestTransferMessage, minNode.getId());
             }
 
@@ -364,11 +419,11 @@ public class Server {
         // todo: read names from args, get ip address from name, compute id by hashing ip
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
-        String nodeName = "node1";
-        int nodeId = 9981;
+        String nodeName = "node4";
+        int nodeId = 9884;
 
-        String headName = "node1";
-        int headId = 9981;
+        String headName = "node2";
+        int headId = 9882;
 
         final Server server = new Server(nodeName, nodeId, headName, headId);
         server.start();

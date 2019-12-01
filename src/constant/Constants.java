@@ -13,8 +13,9 @@ public class Constants {
     public static final int RESPOND_CLIENT_MESSAGE_TYPE = 8;
     public static final int REQUEST_TRANSFER_MESSAGE_TYPE = 9;
     public static final int RESPOND_TRANSFER_MESSAGE_TYPE = 10;
-    public static final int JOIN_MIN_TRANFER_TYPE = 1;
-    public static final int JOIN_NOT_MIN_TRANFER_TYPE = 2;
+    public static final int JOIN_MIN_TRANSFER_TYPE = 1; // new joined node is a min node (connect to previous min node)
+    public static final int JOIN_MAX_TRANSFER_TYPE = 2; // is max node (connect to min node)
+    public static final int JOIN_NOT_MIN_MAX_TRANSFER_TYPE = 3; // is not min or max node (insert between nodes)
     public static final int LEAVE_TRANSFER_TYPE = 3;
     public static final int PORT = 9989;
     public static final int BUFFER_SIZE = 65535;

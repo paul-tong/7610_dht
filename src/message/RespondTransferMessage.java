@@ -10,9 +10,12 @@ public class RespondTransferMessage implements Message, Serializable {
     private int type = Constants.RESPOND_TRANSFER_MESSAGE_TYPE;
     private HashMap<Integer, Integer> transferData = new HashMap<>();
 
-    public RespondTransferMessage(HashMap<Integer, Integer> map)
+    private String originalNodeName;
+
+    public RespondTransferMessage(HashMap<Integer, Integer> map, String name)
     {
         transferData.putAll(map);
+        originalNodeName = name;
     }
 
     @Override
@@ -28,4 +31,12 @@ public class RespondTransferMessage implements Message, Serializable {
         this.transferData = transferData;
     }
 
+
+    public String getOriginalNodeName() {
+        return originalNodeName;
+    }
+
+    public void setOriginalNodeName(String originalNodeName) {
+        this.originalNodeName = originalNodeName;
+    }
 }

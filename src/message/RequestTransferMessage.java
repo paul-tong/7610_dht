@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class RequestTransferMessage implements Message, Serializable {
     private int type = Constants.REQUEST_TRANSFER_MESSAGE_TYPE;
     private int transferType;
-    private Node requestNode;
+    private Node requestNode; // node that request the transfer data
 
     public RequestTransferMessage(Node node, int transferType) {
         requestNode = node;
@@ -35,5 +35,4 @@ public class RequestTransferMessage implements Message, Serializable {
     public void setTransferType(int transferType) {
         this.transferType = transferType;
     }
-
 }
