@@ -419,8 +419,8 @@ public class Server {
         // todo: read names from args, get ip address from name, compute id by hashing ip
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
-        String nodeName = "node4";
-        int nodeId = 9884;
+        String nodeName = "node5";
+        int nodeId = 9885;
 
         String headName = "node2";
         int headId = 9882;
