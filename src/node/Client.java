@@ -5,10 +5,8 @@ import java.net.SocketException;
 import java.util.Scanner;
 
 import constant.Constants;
-import message.Message;
-import message.MessageOperator;
-import message.RequestNodeLeaveMessage;
-import message.RespondClientMessage;
+import hash.HashGenerator;
+import message.*;
 
 /**
  * Listen to data add, delete, update, lookup operations from users
@@ -26,7 +24,7 @@ public class Client {
 
         try {
             // todo: for test use id as port number
-            //  when use docker, use Constant.PORT
+            // when use docker, use Constant.PORT
             socket = new DatagramSocket(id);
         } catch (SocketException e) {
             e.printStackTrace();
@@ -57,21 +55,18 @@ public class Client {
         receiveThread.start();
 
         // keep running application until killing it
-        while(true) {
+        while (true) {
         }
     }
 
     private void listenUserInput() {
-        while(true) {
+        while (true) {
             /**
-             *  read each input line
-             *  input format:
-             *    1) node operation: action nodeName
-             *       eg, leave node2 (means leave node2 from ring)
-             *    2) data operation: action key val(optional)
-             *       eg, put 2 5    (means add key value pair <2, 5> to table)
-             *           get 2      (means get value with key 2 from table)
-             *           remove 2   (means remove pair with key 2 from table)
+             * read each input line input format: 1) node operation: action nodeName eg,
+             * leave node2 (means leave node2 from ring) 2) data operation: action key
+             * val(optional) eg, put 2 5 (means add key value pair <2, 5> to table) get 2
+             * (means get value with key 2 from table) remove 2 (means remove pair with key
+             * 2 from table)
              */
             Scanner in = new Scanner(System.in);
             String s = in.nextLine();
@@ -83,39 +78,55 @@ public class Client {
             }
 
             String action = inputs[0];
-            switch(action) {
-                case "leave":
-                    // todo: for test, need to input leave node id(port), don't need if in docker
-                    String leaveNodeName = inputs[1];
-                    int leaveNodeId = Integer.parseInt(inputs[2]);
+            switch (action) {
+            case "put":
+                String key = inputs[1];
+                String value = inputs[2];
+                Message updateMessage = new RequestPutMessage(key, value);
+                MessageOperator.sendMessage(socket, "node1", updateMessage, 0);
+                break;
+            case "get":
+                String queryKey = inputs[1];
+                Message queryMessage = new LookupMessage(queryKey, false);
+                MessageOperator.sendMessage(socket, "node1", queryMessage, 0);
+                break;
+            case "remove":
+                String removeKey = inputs[1];
+                Message removeMessage = new LookupMessage(removeKey, true);
+                MessageOperator.sendMessage(socket, "node1", removeMessage, 0);
+                break;
+            case "leave":
+                // todo: for test, need to input leave node id(port), don't need if in docker
+                String leaveNodeName = inputs[1];
+                int leaveNodeId = Integer.parseInt(inputs[2]);
 
-                    Message message = new RequestNodeLeaveMessage(new Node(client.getName(), client.getId()));
-                    MessageOperator.sendMessage(socket, leaveNodeName, message, leaveNodeId);
-                    break;
-                default:
-                    System.out.println("unknown action");
+                Message message = new RequestNodeLeaveMessage(new Node(client.getName(), client.getId()));
+                MessageOperator.sendMessage(socket, leaveNodeName, message, leaveNodeId);
+                break;
+            default:
+                System.out.println("unknown action");
             }
         }
     }
 
     private void receiveMessage() {
-        while(true) {
+        while (true) {
             Message message = MessageOperator.receiveMessage(socket);
             int type = message.getType();
 
             // print responded note
             if (type == Constants.RESPOND_CLIENT_MESSAGE_TYPE) {
-                RespondClientMessage response = (RespondClientMessage)message;
+                RespondClientMessage response = (RespondClientMessage) message;
                 System.out.println(response.getNote());
             }
         }
     }
 
-
     public static void main(String[] args) {
-        // todo: read names from args, get ip address from name, compute id by hashing ip
-        //  for testing, all nodes use localhost with different ports
-        //  so we can run multiple instances on intellij
+        // todo: read names from args, get ip address from name, compute id by hashing
+        // ip
+        // for testing, all nodes use localhost with different ports
+        // so we can run multiple instances on intellij
         String clientName = "client";
         int clientId = 9980;
 
