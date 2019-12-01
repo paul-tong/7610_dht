@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import hash.HashGenerator;
 import message.*;
 import static constant.Constants.*;
 
@@ -127,7 +128,49 @@ public class Server {
             if (type == REQUEST_NODE_LEAVE_MESSAGE_TYPE) {
                 handleRequestNodeLeaveMessage((RequestNodeLeaveMessage)message);
             }
+            if (type == LOOKUP_MESSAGE_TYPE) {
+                handleLookupMessage((LookupMessage)message);
+            }
+            if (type == REQUEST_PUT_MESSAGE_TYPE) {
+                handleRequestPutMessage((RequestPutMessage)message);
+            }
+            if (type == REQUEST_REMOVE_MESSAGE_TYPE) {
+                handleLookupMessage((LookupMessage) message);
+            }
         }
+    }
+
+    private void handleRequestPutMessage(RequestPutMessage message) {
+        String key = message.getKey();
+        String value = message.getValue();
+        //todo compare the key id with node id to determine which node to store
+    }
+
+    private void handleLookupMessage(LookupMessage message) {
+        String key = message.getKey();
+        if (current.getId() == head.getId() && !message.isFirst()) {
+            RespondClientMessage response = new RespondClientMessage("the value of " + key + " is not found." );
+            MessageOperator.sendMessage(socket, "client", response, 0);
+            return;
+        }
+        message.setFirst(false);
+        int keyId = HashGenerator.getHash(key);
+        if (dataMap.containsKey(keyId)) {
+            RespondClientMessage response;
+            if (message.getType() == REQUEST_REMOVE_MESSAGE_TYPE) {
+                response = new RespondClientMessage("the key " + key + " has deleted from the Chord.");
+                dataMap.remove(keyId);
+            }
+            else {
+                response = new RespondClientMessage("the value of " + key + " is " + dataMap.get(keyId));
+            }
+            MessageOperator.sendMessage(socket, "client", response, 0);
+        }
+        else {
+            //todo compare keyId with nodeId to find if we need to query next node.
+            MessageOperator.sendMessage(socket, next.getName(), message, 0);
+        }
+
     }
 
     private void handleRequestNodeLeaveMessage(RequestNodeLeaveMessage message) {
