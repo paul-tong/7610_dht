@@ -9,6 +9,8 @@ public class Constants {
     public static final int REQUEST_PREV_MESSAGE_TYPE = 4;
     public static final int RETURN_PREV_MESSAGE_TYPE = 5;
     public static final int NOTIFY_NEXT_MESSAGE_TYPE = 6;
+    public static final int REQUEST_NODE_LEAVE_MESSAGE_TYPE = 7;
+    public static final int RESPOND_CLIENT_MESSAGE_TYPE = 8;
     public static final int PORT = 9989;
     public static final int BUFFER_SIZE = 65535;
     public static final int MODULE = (int)Math.pow(2, 6); // 2^m, used to mod hashed id
