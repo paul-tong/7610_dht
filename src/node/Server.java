@@ -15,7 +15,7 @@ public class Server {
     private Node next;
     private Node prev;
     private Node head;
-    private Map<Integer, Integer> dataMap;
+    private HashMap<Integer, Integer> dataMap;
     private DatagramSocket socket;
 
     // todo: compute id base on name with hash function
@@ -92,7 +92,6 @@ public class Server {
         // timer to repeat at certain interval
         Timer stabilizationTimer = new Timer("stabilizationTimer");
         stabilizationTimer.scheduleAtFixedRate(repeatedTask, STABLIZATION_DELAY, STABLIZATION_INTERVAL);
-
     }
 
     private void sendStabilizationMessage() {
@@ -127,7 +126,32 @@ public class Server {
             if (type == REQUEST_NODE_LEAVE_MESSAGE_TYPE) {
                 handleRequestNodeLeaveMessage((RequestNodeLeaveMessage)message);
             }
+            if (type == REQUEST_TRANSFER_MESSAGE_TYPE) {
+                handleRequestTransferMessage((RequestTransferMessage)message);
+            }
+            if (type == RESPOND_TRANSFER_MESSAGE_TYPE) {
+                handleRespondTransferMessage((RespondTransferMessage)message);
+            }
         }
+    }
+
+    /**
+     * receive transfer data from its next node
+     * put these data into current node's map
+     * @param message
+     */
+    private void handleRespondTransferMessage(RespondTransferMessage message) {
+        // put data into map
+    }
+
+    /**
+     * receive request to transfer data
+     * transfer its data to request node
+     * @param message
+     */
+    private void handleRequestTransferMessage(RequestTransferMessage message) {
+        // transfer data based on transfer type
+        // put data into map, wrap and send in respondTransferMessage
     }
 
     private void handleRequestNodeLeaveMessage(RequestNodeLeaveMessage message) {
@@ -148,6 +172,8 @@ public class Server {
         MessageOperator.sendMessage(socket, next.getName(), setPrevMessage, next.getId());
 
         // todo: transfer all current node's data to cur.next
+        Message transferMessage = new RespondTransferMessage(dataMap);
+        MessageOperator.sendMessage(socket, next.getName(), transferMessage, next.getId());
 
         // send response to client
         String note = buildResponseNote(current.getName(), current.getId(),"just left");
@@ -280,8 +306,18 @@ public class Server {
                 // send message to minBigger node to set request node as previous node
                 Message setPrevMessage = new SetPrevMessage(new Node(requestNode.getName(), requestNode.getId()));
                 MessageOperator.sendMessage(socket, minBiggerNode.getName(), setPrevMessage, minBiggerNode.getId());
+
+                // send message to transfer data from its next node
+                if (requestNode.getId() < minNode.getId()) { // new node is a new minimal node
+                    Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_MIN_TRANFER_TYPE);
+                    MessageOperator.sendMessage(socket, minBiggerNode.getName(), requestTransferMessage, minBiggerNode.getId());
+                }
+                else { // new node is not a minimal node(insert it between two nodes)
+                    Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_NOT_MIN_TRANFER_TYPE);
+                    MessageOperator.sendMessage(socket, minBiggerNode.getName(), requestTransferMessage, minBiggerNode.getId());
+                }
             }
-            else { // has no bigger node, connect request node to the minimal node
+            else { // has no bigger node(new node is biggest), connect request node to the minimal node
                 //System.out.println("connect request node to min node");
 
                 // send message to request node to set min node as next node
@@ -291,6 +327,11 @@ public class Server {
                 // send message to min node to set request node as previous node
                 Message setPrevMessage = new SetPrevMessage(new Node(requestNode.getName(), requestNode.getId()));
                 MessageOperator.sendMessage(socket, minNode.getName(), setPrevMessage, minNode.getId());
+
+                // send message to transfer data from its next node
+                // new node is a biggest node, not a minimal node
+                Message requestTransferMessage = new RequestTransferMessage(new Node(requestNode.getName(), requestNode.getId()), JOIN_NOT_MIN_TRANFER_TYPE);
+                MessageOperator.sendMessage(socket, minNode.getName(), requestTransferMessage, minNode.getId());
             }
 
             return;
