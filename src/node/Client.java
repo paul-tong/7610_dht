@@ -1,7 +1,9 @@
 package node;
 
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 
 import static constant.Constants.*;
@@ -149,16 +151,22 @@ public class Client {
 
 
     public static void main(String[] args) {
-        // todo: read names from args, get ip address from name, compute id by hashing ip
+        // todo: get ip address from name, compute id by hashing ip
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
-        String clientName = "client";
-        int clientId = 9880;
-
-        String headName = "node2";
-        int headId = 9882;
-
-        final Client client = new Client(clientName, clientId, headName, headId);
+        final Client client = new Client(CLIENT_NAME, CLIENT_ID, HEAD_NAME, HEAD_ID);
         client.start();
+
+        // todo: uncommand this when using docker
+        /*try {
+            String headName = HEAD_NAME;
+            String headIp = InetAddress.getByName(headName).toString() + ":" + PORT;
+            int headId = HashGenerator.getHash(headIp);
+
+            final Client client = new Client(CLIENT_NAME, CLIENT_ID, headName, headId);
+            client.start();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }*/
     }
 }

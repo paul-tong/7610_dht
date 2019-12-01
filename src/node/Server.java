@@ -1,12 +1,15 @@
 package node;
 
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import hash.HashGenerator;
 import message.*;
 import static constant.Constants.*;
 
@@ -32,7 +35,7 @@ public class Server {
         dataMap = new HashMap<>();
 
         // todo: for testing, add some data into map if it is head node
-        if (name.equals("node2")) {
+        if (name.equals(headName)) {
             dataMap.put(9879, 1);
             dataMap.put(9880, 1);
             dataMap.put(9881, 1);
@@ -492,20 +495,19 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        // todo: read names from args, get ip address from name, compute id by hashing ip
+        // todo: get ip address from name, compute id by hashing ip
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
-        String nodeName = "node4";
-        int nodeId = 9884;
+        String nodeName = "node1";
+        int nodeId = 9881;
 
-        String headName = "node2";
-        int headId = 9882;
 
-        final Server server = new Server(nodeName, nodeId, headName, headId);
+        final Server server = new Server(nodeName, nodeId, HEAD_NAME, HEAD_ID);
         server.start();
 
         // todo: uncommand this when using docker
-        /*
+        /*String nodeName = args[0];
+        String headName = HEAD_NAME;
         try {
             String nodeIp = InetAddress.getByName(nodeName).toString() + ":" + PORT;
             String headIp = InetAddress.getByName(headName).toString() + ":" + PORT;
