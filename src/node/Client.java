@@ -4,11 +4,9 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.Scanner;
 
-import constant.Constants;
-import message.Message;
-import message.MessageOperator;
-import message.RequestNodeLeaveMessage;
-import message.RespondClientMessage;
+import static constant.Constants.*;
+import hash.HashGenerator;
+import message.*;
 
 /**
  * Listen to data add, delete, update, lookup operations from users
@@ -83,14 +81,52 @@ public class Client {
             }
 
             String action = inputs[0];
+            int key = -1;
+            int keyId = -1;
+            int val = -1;
+
             switch(action) {
                 case "leave":
                     // todo: for test, need to input leave node id(port), don't need if in docker
                     String leaveNodeName = inputs[1];
-                    int leaveNodeId = Integer.parseInt(inputs[2]);
+                    int leaveNodeId = Integer.parseInt(inputs[2]); // don't need in docker
 
-                    Message message = new RequestNodeLeaveMessage(new Node(client.getName(), client.getId()));
-                    MessageOperator.sendMessage(socket, leaveNodeName, message, leaveNodeId);
+                    Message messageLeave = new RequestNodeLeaveMessage();
+                    MessageOperator.sendMessage(socket, leaveNodeName, messageLeave, leaveNodeId);
+                    break;
+                case "put":
+                    key = Integer.parseInt(inputs[1]);
+                    val = Integer.parseInt(inputs[2]);
+                    keyId = key; // for testing, keyId is same as key, and key is corresponding to port number of nodes
+
+                    // todo: use hash function to generate id
+                    //int keyId = HashGenerator.getHash(key);
+
+                    // send message to head to look up the node that this key belongs to
+                    Message messagePut = new FindNextMessage(new Node("data", keyId), PUT_OPERATION_TYPE, keyId, val);
+                    MessageOperator.sendMessage(socket, head.getName(), messagePut, head.getId());
+                    break;
+                case "get":
+                    key = Integer.parseInt(inputs[1]);
+                    keyId = key; // for testing, keyId is same as key, and key is corresponding to port number of nodes
+
+                    // todo: use hash function to generate id
+                    //keyId = HashGenerator.getHash(key);
+
+                    // send message to head to look up the node that this key belongs to
+                    Message messageGet = new FindNextMessage(new Node("data", keyId), GET_OPERATION_TYPE, keyId, -1);
+                    MessageOperator.sendMessage(socket, head.getName(), messageGet, head.getId());
+                    break;
+                case "remove":
+                    key = Integer.parseInt(inputs[1]);
+                    keyId = key; // for testing, keyId is same as key, and key is corresponding to port number of nodes
+
+                    // todo: use hash function to generate id
+                    //keyId = HashGenerator.getHash(key);
+
+                    // send message to head to look up the node that this key belongs to
+                    Message messageRemove = new FindNextMessage(new Node("data", keyId), REMOVE_OPERATION_TYPE, keyId, -1);
+                    MessageOperator.sendMessage(socket, head.getName(), messageRemove, head.getId());
                     break;
                 default:
                     System.out.println("unknown action");
@@ -104,7 +140,7 @@ public class Client {
             int type = message.getType();
 
             // print responded note
-            if (type == Constants.RESPOND_CLIENT_MESSAGE_TYPE) {
+            if (type == RESPOND_CLIENT_MESSAGE_TYPE) {
                 RespondClientMessage response = (RespondClientMessage)message;
                 System.out.println(response.getNote());
             }
@@ -117,10 +153,10 @@ public class Client {
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
         String clientName = "client";
-        int clientId = 9980;
+        int clientId = 9880;
 
-        String headName = "node1";
-        int headId = 9981;
+        String headName = "node2";
+        int headId = 9882;
 
         final Client client = new Client(clientName, clientId, headName, headId);
         client.start();

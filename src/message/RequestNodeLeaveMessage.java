@@ -11,22 +11,11 @@ import java.io.Serializable;
 public class RequestNodeLeaveMessage implements Message, Serializable {
 
     private int type = Constants.REQUEST_NODE_LEAVE_MESSAGE_TYPE;
-    private Node client;
 
-    public RequestNodeLeaveMessage(Node client) {
-        this.client = client;
-    }
+    public RequestNodeLeaveMessage() {}
 
     @Override
     public int getType() {
         return type;
-    }
-
-    public Node getClient() {
-        return client;
-    }
-
-    public void setClient(Node client) {
-        this.client = client;
     }
 }

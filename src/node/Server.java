@@ -145,7 +145,61 @@ public class Server {
             if (type == RESPOND_TRANSFER_MESSAGE_TYPE) {
                 handleRespondTransferMessage((RespondTransferMessage)message);
             }
+            if (type == REQUEST_DATA_OPERATION_MESSAGE_TYPE) {
+                handleDataOperationMessage((RequestDataOperationMessage)message);
+            }
         }
+    }
+
+    /**
+     * do data operation on current node
+     * respond back to client node
+     * @param message
+     */
+    private void handleDataOperationMessage(RequestDataOperationMessage message) {
+        int operationType = message.getOperationType();
+        int key = message.getDataKey();
+        int val = message.getDataVal();
+        String note = buildResponseNote(current.getName(), current.getId(), "unknown operation");
+
+        switch(operationType){
+            case PUT_OPERATION_TYPE:
+                if (dataMap.containsKey(key)) {
+                    dataMap.put(key, val);
+                    note = buildResponseNote(current.getName(), current.getId(), "update data: <" + key + "," + val + ">");
+                }
+                else {
+                    dataMap.put(key, val);
+                    note = buildResponseNote(current.getName(), current.getId(), "add data: <" + key + "," + val + ">");
+                }
+                respondClientMessage(note);
+                break;
+            case GET_OPERATION_TYPE:
+                if (dataMap.containsKey(key)) {
+                    val = dataMap.get(key);
+                    note = buildResponseNote(current.getName(), current.getId(), "get data: <" + key + "," + val + ">");
+                }
+                else {
+                    note = buildResponseNote(current.getName(), current.getId(), "get data: key " + key + " not exist");
+                }
+                respondClientMessage(note);
+                break;
+            case REMOVE_OPERATION_TYPE:
+                if (dataMap.containsKey(key)) {
+                    val = dataMap.get(key);
+                    dataMap.remove(key);
+                    note = buildResponseNote(current.getName(), current.getId(), "remove data: <" + key + "," + val + ">");
+                }
+                else {
+                    note = buildResponseNote(current.getName(), current.getId(), "remove data: key " + key + " not exist");
+                }
+                respondClientMessage(note);
+                break;
+            default:
+                respondClientMessage(note);
+        }
+
+        System.out.println(note);
     }
 
     /**
@@ -209,7 +263,7 @@ public class Server {
         // node is head, cannot leave
         if (current.getId() == head.getId()) {
             String note = buildResponseNote(current.getName(), current.getId(),"is head, cannot leave");
-            respondClientMessage(message.getClient(), note);
+            respondClientMessage(note);
             System.out.println(note);
             return;
         }
@@ -232,7 +286,7 @@ public class Server {
 
         // send response to client
         String note = buildResponseNote(current.getName(), current.getId(),"just left");
-        respondClientMessage(message.getClient(), note);
+        respondClientMessage(note);
         System.out.println(note);
 
         // kill the node
@@ -245,12 +299,11 @@ public class Server {
 
     /**
      * send message back to client
-     * @param client
      * @param note
      */
-    private void respondClientMessage(Node client, String note) {
+    private void respondClientMessage(String note) {
         Message response = new RespondClientMessage(note);
-        MessageOperator.sendMessage(socket, client.getName(), response, client.getId());
+        MessageOperator.sendMessage(socket, CLIENT_NAME, response, CLIENT_ID);
     }
 
     /**
@@ -353,6 +406,17 @@ public class Server {
             if (message.getMinBiggerNode() != null) {
                 //System.out.println("connect request node to minBigger node");
 
+                /**
+                 * is looking up a node for data operation and has MinBigger Node
+                 * minBigger node is the node that needs to operate the given data
+                 * send request data operation message to the minBigger node
+                 */
+                if (message.isDataOperation()) {
+                    Message operationMessage = new RequestDataOperationMessage(message.getOperationType(), message.getDataKey(), message.getDataVal());
+                    MessageOperator.sendMessage(socket, minBiggerNode.getName(), operationMessage, minBiggerNode.getId());
+                    return;
+                }
+
                 // send message to request node to set minBigger node as next node
                 Message setNextMessage = new SetNextMessage(new Node(minBiggerNode.getName(), minBiggerNode.getId()));
                 MessageOperator.sendMessage(socket, requestNode.getName(), setNextMessage, requestNode.getId());
@@ -374,6 +438,17 @@ public class Server {
             }
             else { // has no bigger node(new node is biggest), connect request node to the minimal node
                 //System.out.println("connect request node to min node");
+
+                /**
+                 * data key id has no MinBigger Node
+                 * min node is the node that needs to operate the given data
+                 * send request data operation message to the min node
+                 */
+                if (message.isDataOperation()) {
+                    Message operationMessage = new RequestDataOperationMessage(message.getOperationType(), message.getDataKey(), message.getDataVal());
+                    MessageOperator.sendMessage(socket, minNode.getName(), operationMessage, minNode.getId());
+                    return;
+                }
 
                 // send message to request node to set min node as next node
                 Message setNextMessage = new SetNextMessage(new Node(minNode.getName(), minNode.getId()));
@@ -405,8 +480,9 @@ public class Server {
             message.setMinNode(new Node(currentName, currentId));
         }
 
-        // find a smaller node that has bigger id than request node
-        if (currentId > requestNode.getId()
+        // note: needs >=, especially for looking up data key id
+        // find a smaller node that has bigger equal id than request node
+        if (currentId >= requestNode.getId()
                 && (minBiggerNode == null || currentId < minBiggerNode.getId())) {
             message.setMinBiggerNode(new Node(currentName, currentId));
         }
@@ -419,8 +495,8 @@ public class Server {
         // todo: read names from args, get ip address from name, compute id by hashing ip
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
-        String nodeName = "node5";
-        int nodeId = 9885;
+        String nodeName = "node4";
+        int nodeId = 9884;
 
         String headName = "node2";
         int headId = 9882;
