@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import static constant.Constants.BUFFER_SIZE;
+import static constant.Constants.PORT;
 
 public class MessageOperator {
 
@@ -52,9 +53,9 @@ public class MessageOperator {
 
         try {
             // todo: use nodeName instead of localhost, don't need sendPort
-            //InetAddress ip = InetAddress.getByName(nodeName);
-            InetAddress ip = InetAddress.getByName("localhost");
-            DatagramPacket DpSend = new DatagramPacket(buf, buf.length, ip, sendPort);
+            InetAddress ip = InetAddress.getByName(nodeName);
+            //InetAddress ip = InetAddress.getByName("localhost");
+            DatagramPacket DpSend = new DatagramPacket(buf, buf.length, ip, PORT);
             socket.send(DpSend);
         } catch (UnknownHostException e) {
             e.printStackTrace();
