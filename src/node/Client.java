@@ -27,7 +27,7 @@ public class Client {
         try {
             // todo: for test use id as port number
             //  when use docker, use Constant.PORT
-            socket = new DatagramSocket(id);
+            socket = new DatagramSocket(PORT);
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -83,7 +83,7 @@ public class Client {
             }
 
             String action = inputs[0];
-            int key = -1;
+            String key = "";
             int keyId = -1;
             int val = -1;
 
@@ -97,34 +97,25 @@ public class Client {
                     MessageOperator.sendMessage(socket, leaveNodeName, messageLeave, leaveNodeId);
                     break;
                 case "put":
-                    key = Integer.parseInt(inputs[1]);
+                    key = inputs[1];
                     val = Integer.parseInt(inputs[2]);
-                    keyId = key; // for testing, keyId is same as key, and key is corresponding to port number of nodes
-
-                    // todo: use hash function to generate id
-                    //int keyId = HashGenerator.getHash(key);
+                    keyId = HashGenerator.getHash(key);
 
                     // send message to head to look up the node that this key belongs to
                     Message messagePut = new FindNextMessage(new Node("data", keyId), PUT_OPERATION_TYPE, keyId, val);
                     MessageOperator.sendMessage(socket, head.getName(), messagePut, head.getId());
                     break;
                 case "get":
-                    key = Integer.parseInt(inputs[1]);
-                    keyId = key; // for testing, keyId is same as key, and key is corresponding to port number of nodes
-
-                    // todo: use hash function to generate id
-                    //keyId = HashGenerator.getHash(key);
+                    key = inputs[1];
+                    keyId = HashGenerator.getHash(key);
 
                     // send message to head to look up the node that this key belongs to
                     Message messageGet = new FindNextMessage(new Node("data", keyId), GET_OPERATION_TYPE, keyId, -1);
                     MessageOperator.sendMessage(socket, head.getName(), messageGet, head.getId());
                     break;
                 case "remove":
-                    key = Integer.parseInt(inputs[1]);
-                    keyId = key; // for testing, keyId is same as key, and key is corresponding to port number of nodes
-
-                    // todo: use hash function to generate id
-                    //keyId = HashGenerator.getHash(key);
+                    key = inputs[1];
+                    keyId = HashGenerator.getHash(key);
 
                     // send message to head to look up the node that this key belongs to
                     Message messageRemove = new FindNextMessage(new Node("data", keyId), REMOVE_OPERATION_TYPE, keyId, -1);
@@ -154,11 +145,11 @@ public class Client {
         // todo: get ip address from name, compute id by hashing ip
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
-        final Client client = new Client(CLIENT_NAME, CLIENT_ID, HEAD_NAME, HEAD_ID);
-        client.start();
+        //final Client client = new Client(CLIENT_NAME, CLIENT_ID, HEAD_NAME, HEAD_ID);
+        //client.start();
 
         // todo: uncommand this when using docker
-        /*try {
+        try {
             String headName = HEAD_NAME;
             String headIp = InetAddress.getByName(headName).toString() + ":" + PORT;
             int headId = HashGenerator.getHash(headIp);
@@ -167,6 +158,6 @@ public class Client {
             client.start();
         } catch (UnknownHostException e) {
             e.printStackTrace();
-        }*/
+        }
     }
 }

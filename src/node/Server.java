@@ -35,7 +35,7 @@ public class Server {
         dataMap = new HashMap<>();
 
         // todo: for testing, add some data into map if it is head node
-        if (name.equals(headName)) {
+        /*if (name.equals(headName)) {
             dataMap.put(9879, 1);
             dataMap.put(9880, 1);
             dataMap.put(9881, 1);
@@ -45,12 +45,12 @@ public class Server {
             dataMap.put(9885, 1);
             dataMap.put(9886, 1);
             dataMap.put(9887, 1);
-        }
+        }*/
 
         try {
             // todo: for test use id as port number
             //  when use docker, use Constant.PORT
-            socket = new DatagramSocket(id);
+            socket = new DatagramSocket(PORT);
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -498,15 +498,15 @@ public class Server {
         // todo: get ip address from name, compute id by hashing ip
         //  for testing, all nodes use localhost with different ports
         //  so we can run multiple instances on intellij
-        String nodeName = "node1";
+        /*String nodeName = "node1";
         int nodeId = 9881;
 
 
         final Server server = new Server(nodeName, nodeId, HEAD_NAME, HEAD_ID);
-        server.start();
+        server.start();*/
 
         // todo: uncommand this when using docker
-        /*String nodeName = args[0];
+        String nodeName = args[0];
         String headName = HEAD_NAME;
         try {
             String nodeIp = InetAddress.getByName(nodeName).toString() + ":" + PORT;
@@ -519,6 +519,6 @@ public class Server {
 
         } catch (UnknownHostException e) {
             e.printStackTrace();
-        }*/
+        }
     }
 }
